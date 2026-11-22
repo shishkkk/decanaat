@@ -1,0 +1,5 @@
+{$CAMPUS_HOST} {
+  reverse_proxy 127.0.0.1:3048 {
+    header_up Host 127.0.0.1:3048
+  }
+}

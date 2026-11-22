@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function NotFound(){return <main className="verify-page"><h1>404</h1><p>Страница не найдена или недоступна.<br/>Page not found or unavailable.</p><Link className="button primary" href="/">В кабинет / Open portal</Link></main>;}

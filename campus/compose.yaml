@@ -1,0 +1,14 @@
+services:
+  campus:
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DEMO_MODE: "true"
+      APP_ORIGIN: "${APP_ORIGIN:-http://127.0.0.1:3000}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+    volumes:
+      - campus-data:/app/data
+    restart: unless-stopped
+volumes:
+  campus-data:

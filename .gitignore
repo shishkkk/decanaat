@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.pnpm-store/
+generated/
+dist/
+.env*
+!.env.example
+*.sqlite*
+*.db
+*.log
+*.tsbuildinfo
+data/
+.openai/

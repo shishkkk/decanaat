@@ -1,0 +1,4 @@
+import {z} from 'zod';
+export const markInput=z.object({member:z.string().min(1).max(100),status:z.enum(['present','absent','late','excused','unmarked'])}).strict();
+export const readRoster=`SELECT r.id,r.name,r.name_en,COALESCE(m.status,'unmarked') AS status FROM lessons l JOIN courses c ON c.id=l.course_id JOIN users u ON u.id=c.user_id JOIN attendance_roster r ON r.group_name=u.group_name LEFT JOIN attendance_marks m ON m.lesson_id=l.id AND m.member_id=r.id WHERE l.id=? AND c.teacher_id=? ORDER BY r.name`;
+export const saveMark=`INSERT INTO attendance_marks(lesson_id,member_id,status) SELECT l.id,r.id,? FROM lessons l JOIN courses c ON c.id=l.course_id JOIN users u ON u.id=c.user_id JOIN attendance_roster r ON r.group_name=u.group_name WHERE l.id=? AND c.teacher_id=? AND r.id=? AND COALESCE(l.change_kind,'')<>'cancelled' ON CONFLICT(lesson_id,member_id) DO UPDATE SET status=excluded.status`;

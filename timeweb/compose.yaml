@@ -1,0 +1,28 @@
+services:
+  campus:
+    image: node:24-bookworm-slim
+    restart: unless-stopped
+    working_dir: /opt/campus
+    command: ["node", "serve.mjs"]
+    environment:
+      PORT: "3048"
+      CAMPUS_ORIGIN: https://${CAMPUS_HOST:?}
+      CAMPUS_DATABASE: /data/campus.sqlite
+    volumes:
+      - ./:/opt/campus:ro
+      - campus-data:/data
+    ports:
+      - "80:80"
+      - "443:443"
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    network_mode: service:campus
+    environment:
+      CAMPUS_HOST: ${CAMPUS_HOST:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+volumes:
+  campus-data:
+  certificates:

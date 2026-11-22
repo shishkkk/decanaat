@@ -1,0 +1,72 @@
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,login TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('student','staff','teacher')),name TEXT NOT NULL,name_en TEXT NOT NULL,group_name TEXT NOT NULL DEFAULT '',faculty TEXT NOT NULL DEFAULT '',faculty_en TEXT NOT NULL DEFAULT '',program TEXT NOT NULL DEFAULT '',program_en TEXT NOT NULL DEFAULT '',year INTEGER NOT NULL DEFAULT 0,admission INTEGER NOT NULL DEFAULT 0,funding TEXT NOT NULL DEFAULT '',student_no TEXT NOT NULL DEFAULT '',email TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL DEFAULT '',avatar TEXT NOT NULL DEFAULT 'ink');
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),csrf TEXT NOT NULL,expires INTEGER NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,reset_at INTEGER NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS courses(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),title TEXT NOT NULL,title_en TEXT NOT NULL,teacher_id TEXT NOT NULL,teacher TEXT NOT NULL,teacher_en TEXT NOT NULL,semester INTEGER NOT NULL,assessment TEXT NOT NULL,grade INTEGER CHECK(grade BETWEEN 2 AND 5),passed INTEGER NOT NULL DEFAULT 0,debt INTEGER NOT NULL DEFAULT 0,credits INTEGER NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS grade_history(id TEXT PRIMARY KEY,course_id TEXT NOT NULL REFERENCES courses(id),label TEXT NOT NULL,label_en TEXT NOT NULL,grade INTEGER NOT NULL,created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS lessons(id TEXT PRIMARY KEY,course_id TEXT NOT NULL REFERENCES courses(id),starts TEXT NOT NULL,ends TEXT NOT NULL,room TEXT NOT NULL,building TEXT NOT NULL,kind TEXT NOT NULL,change_kind TEXT,reason TEXT,reason_en TEXT,old_room TEXT);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS requests(id TEXT PRIMARY KEY,number INTEGER UNIQUE NOT NULL,user_id TEXT NOT NULL REFERENCES users(id),type TEXT NOT NULL,delivery TEXT NOT NULL,body TEXT NOT NULL,status TEXT NOT NULL CHECK(status IN ('created','accepted','processing','clarification','ready','rejected')),version INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,verification TEXT UNIQUE NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS request_history(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES requests(id),status TEXT NOT NULL,comment TEXT NOT NULL,actor_id TEXT NOT NULL REFERENCES users(id),created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS request_comments(id TEXT PRIMARY KEY,request_id TEXT NOT NULL REFERENCES requests(id),user_id TEXT NOT NULL REFERENCES users(id),body TEXT NOT NULL,created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),title TEXT NOT NULL,title_en TEXT NOT NULL,body TEXT NOT NULL,body_en TEXT NOT NULL,kind TEXT NOT NULL,link TEXT NOT NULL,read_at TEXT,created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),title TEXT NOT NULL,subject TEXT NOT NULL,due TEXT NOT NULL DEFAULT '',done INTEGER NOT NULL DEFAULT 0);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS reflections(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),body TEXT NOT NULL,mood TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),course_id TEXT NOT NULL REFERENCES courses(id),UNIQUE(user_id,course_id));
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL REFERENCES conversations(id),sender TEXT NOT NULL CHECK(sender IN ('student','teacher')),body TEXT NOT NULL,created_at TEXT NOT NULL);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS attachments(id TEXT PRIMARY KEY,message_id TEXT NOT NULL UNIQUE REFERENCES messages(id),name TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,content BLOB NOT NULL);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS courses_owner ON courses(user_id,semester);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS lesson_date ON lessons(starts);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS requests_owner ON requests(user_id,created_at);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS notice_owner ON notifications(user_id,read_at);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS task_owner ON tasks(user_id);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS reflection_owner ON reflections(user_id);
+--> statement-breakpoint
+CREATE TABLE campus_revision(id INTEGER PRIMARY KEY,rev INTEGER NOT NULL CHECK(rev>=0));
+--> statement-breakpoint
+CREATE INDEX courses_teacher ON courses(teacher_id);
+--> statement-breakpoint
+CREATE TABLE attachment_chunks(attachment_id TEXT NOT NULL REFERENCES attachments(id),seq INTEGER NOT NULL,content BLOB NOT NULL,PRIMARY KEY(attachment_id,seq));
+--> statement-breakpoint
+CREATE TABLE campus_events (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  title_en TEXT NOT NULL,
+  description TEXT NOT NULL,
+  description_en TEXT NOT NULL,
+  starts TEXT NOT NULL,
+  location TEXT NOT NULL,
+  location_en TEXT NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE event_registrations (
+  event_id TEXT NOT NULL REFERENCES campus_events(id),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  PRIMARY KEY (event_id,user_id)
+);
+--> statement-breakpoint
+CREATE TABLE exams (
+  course_id TEXT PRIMARY KEY REFERENCES courses(id),
+  starts TEXT NOT NULL,
+  room TEXT NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE users ADD COLUMN last_seen_at TEXT;
